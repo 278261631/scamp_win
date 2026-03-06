@@ -1,0 +1,92 @@
+#
+#				scamp.spec.in
+#
+# Process this file with autoconf to generate an RPM .spec packaging script.
+#
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#
+#	This file part of:	SCAMP
+#
+#	Copyright:		(C) 2002-2021 IAP/CNRS/SorbonneU
+#	          		(C) 2021-2023 CFHT/CNRS
+#	          		(C) 2023-2025 CEA/AIM/UParisSaclay
+#
+#	License:		GNU General Public License
+#
+#	SCAMP is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+# 	(at your option) any later version.
+#	SCAMP is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#	You should have received a copy of the GNU General Public License
+#	along with SCAMP. If not, see <http://www.gnu.org/licenses/>.
+#
+#	Last modified:		09/04/2025
+#
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%define name @PACKAGE_TARNAME@
+%define version @PACKAGE_VERSION@
+%define release @PACKAGE_RELEASE@%{?dist}
+%define debug_package %{nil}
+%undefine _missing_build_ids_terminate_build
+
+Summary: compute astrometric and photometric solutions from SExtractor catalogs
+Name: %{name}
+Version: %{version}
+Release: %{release}
+Source0: https://download.astromatic.net/%{name}/%{name}-%{version}.tar.gz
+URL: https://astromatic.net/software/%{name}/
+License: GPL v3+
+Group: Sciences/Astronomy
+BuildRoot: %{_tmppath}/%{name}-buildroot
+BuildRequires: pkgconfig
+BuildRequires: fftw-devel >= 3.1
+BuildRequires: atlas-devel >= 3.6.0
+BuildRequires: libcurl-devel >= 7.16.0
+BuildRequires: plplot-devel >= 5.9.1
+
+%description
+SCAMP is a program that computes astrometric and photometric solutions from
+SExtractor catalogs
+
+%prep
+%setup -q
+
+%build
+if test "$USE_BEST"; then
+%configure --enable-mkl --enable-auto-flags --enable-best-link --with-release=@PACKAGE_RELEASE@
+elif test "$USE_ICC"; then
+%configure --enable-icc --with-release=@PACKAGE_RELEASE@
+else
+%configure --with-release=@PACKAGE_RELEASE@
+fi
+make %{?_smp_mflags}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%doc config AUTHORS BUGS ChangeLog COPYRIGHT HISTORY INSTALL LICENSE README.md THANKS
+%{_bindir}/@PACKAGE_TARNAME@
+%{_mandir}/man1/@PACKAGE_TARNAME@.1*
+%{_mandir}/manx/@PACKAGE_TARNAME@.x*
+%{_datadir}/@PACKAGE_TARNAME@
+
+%changelog
+* @DATE2@ @PACKAGER@ <@PACKAGE_BUGREPORT@>
+- Automatic RPM rebuild
+* Fri May 23 2003 Emmanuel Bertin <bertin@iap.fr>
+- Second RPM build
+* Wed Jan 1 2003 Emmanuel Bertin <bertin@iap.fr>
+- First RPM build
+
+# end of file

@@ -1,0 +1,96 @@
+@echo off
+REM Build script for SCAMP on Windows
+REM Usage: build_windows.bat [build_type] [generator]
+REM   build_type: Debug or Release (default: Release)
+REM   generator: Visual Studio generator (default: "Visual Studio 16 2019")
+
+setlocal enabledelayedexpansion
+
+REM Set default values
+set BUILD_TYPE=Release
+set GENERATOR="Visual Studio 16 2019"
+set ARCH=x64
+
+REM Parse command line arguments
+if not "%1"=="" set BUILD_TYPE=%1
+if not "%2"=="" set GENERATOR="%2"
+
+echo ==========================================
+echo SCAMP Windows Build Script
+echo ==========================================
+echo Build type: %BUILD_TYPE%
+echo Generator: %GENERATOR%
+echo Architecture: %ARCH%
+echo.
+
+REM Check if CMake is available
+where cmake >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo Error: CMake is not found in PATH.
+    echo Please install CMake from https://cmake.org/download/
+    exit /b 1
+)
+
+REM Check if Visual Studio compiler is available
+where cl >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo Warning: Visual Studio compiler not found in PATH.
+    echo You may need to run from "Developer Command Prompt for VS".
+)
+
+REM Create build directory
+if not exist build mkdir build
+cd build
+
+echo.
+echo ==========================================
+echo Configuring SCAMP with CMake...
+echo ==========================================
+
+REM Configure with CMake
+cmake .. -G %GENERATOR% -A %ARCH% ^
+    -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
+    -DUSE_OPENBLAS=ON ^
+    -DENABLE_THREADS=OFF ^
+    -DENABLE_PLPLOT=OFF
+
+if %ERRORLEVEL% neq 0 (
+    echo Error: CMake configuration failed.
+    echo.
+    echo Common issues:
+    echo 1. Missing dependencies - see README_WINDOWS.md
+    echo 2. Wrong Visual Studio version
+    echo 3. CMake generator not available
+    exit /b 1
+)
+
+echo.
+echo ==========================================
+echo Building SCAMP...
+echo ==========================================
+
+REM Build the project
+cmake --build . --config %BUILD_TYPE% --parallel
+
+if %ERRORLEVEL% neq 0 (
+    echo Error: Build failed.
+    exit /b 1
+)
+
+echo.
+echo ==========================================
+echo Build completed successfully!
+echo ==========================================
+echo.
+echo The SCAMP executable is located at:
+echo   %CD%\bin\%BUILD_TYPE%\scamp.exe
+echo.
+echo To install to a custom location:
+echo   cmake --install . --config %BUILD_TYPE% --prefix "C:\path\to\install"
+echo.
+echo For more information, see README_WINDOWS.md
+echo.
+
+cd ..
+
+endlocal

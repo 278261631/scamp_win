@@ -1,0 +1,102 @@
+/*
+*				match.h
+*
+* Include file for match.c.
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+*
+*	This file part of:	SCAMP
+*
+*	Copyright:		(C) 2002-2020 IAP/CNRS/SorbonneU
+*
+*	License:		GNU General Public License
+*
+*	SCAMP is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+* 	(at your option) any later version.
+*	SCAMP is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*	You should have received a copy of the GNU General Public License
+*	along with SCAMP. If not, see <http://www.gnu.org/licenses/>.
+*
+*	Last modified:		12/08/2020
+*
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+#ifndef _MATCH_H_
+#define _MATCH_H_
+
+#include "field.h"
+#include "fgroup.h"
+
+/*---------------------------- Internal constants ---------------------------*/
+#define		MATCH_CONFPROB	0.01	/* Confusion probability in auto-resol*/
+#define		MATCH_MINCONT	2.0	/* Minimum constrast factor */
+#define		AS_NSOURCESTART	2000	/* Start source nb for auto AS match */
+#define		AS_NSOURCEMAX	16000	/* Max source nb for auto AS match */
+#define		SCALE_RANGE	16.0	/* Initial scale search interval */
+#define		SCALE_ZERO	1.0	/* Initial scale zero-point */
+#define		SCALE_MAXSIZE	4096	/* Max resol. elements in scale */
+#define		ANGLE_MAXSIZE	4096	/* Max resol. elements in pos angle */
+#define		ASLOPASS_LAMBDA	2.0 	/* Lo-pass filter cutoff (pixels) */
+#define		ASHIPASS_LAMBDA	(1/64.0)/* Hi-pass filter cutoff (frame frac.)*/
+#define		AS_FLUXEXP	0.125	/* Exponent used for flux in LL match*/
+#define		LL_NSOURCEMAX	200000	/* Max source nb/set for LL match */
+#define		LL_WRAPPING	1	/* Wrapping factor along each dim. */
+#define		LL_MAXSIZE	8192	/* Max resolution elements in LL */
+#define		LLLOPASS_LAMBDA	2.0	/* Lo-pass filter cutoff (pixels) */
+#define		LLHIPASS_LAMBDA	(1/32.0)/* Hi-pass filter cutoff (frame frac.)*/
+#define		LL_FLUXEXP	0.125	/* Exponent used for flux in LL match*/
+#define		GAUSS_MAXSIG	4.0	/* Max. Gaussian sigma (for speedup) */
+#define		GAUSS_MAXNSIG	3.0	/* Max. Gauss mask size (for speedup) */
+#define		PEAKFIND_NITER	1	/* Max. number of peakfind iterations*/
+
+/*------------------------------- functions ---------------------------------*/
+extern setstruct	*frame_set(setstruct *setin, wcsstruct *wcs,
+				double *centerpos, double radius),
+			*new_fieldset(fieldstruct *field);
+
+extern double		findcrosspeak(float *histo,
+				int width, int height,
+				double xrange, double yrange,
+				double xresol, double yresol,
+				double *xpeak, double *ypeak),
+			match_findas(setstruct *set, setstruct *refset, int nmax,
+				double matchresol, double *angle,double *scale),
+			match_findxy(setstruct *set, setstruct *refset,
+				double matchresol, double *dx, double *dy),
+			mean_wcsposvar(setstruct *set);
+
+extern void		compute_rawpos(wcsstruct *wcs, samplestruct *refsample,
+				int nrefsample),
+			compute_wcsss(wcsstruct *wcs,
+				double *sangle, double *shear),
+			dxy_to_dll(wcsstruct *wcs, double dx, double dy,
+				double *dlng, double *dlat),
+			flipimage(float *histo, int width, int height),
+			match_field(fieldstruct *field, fieldstruct *reffield),
+			match_refine(setstruct *set, setstruct *refset,
+				double matchresol, double *angle, double *scale,
+				double *sangle, double *ratio,
+				double *dx,double *dy),
+			match_test(setstruct *set, setstruct *refset,
+				double matchresol, double *angle, double *scale,
+				double *sangle, double *ratio,
+				double *dlng,double *dlat),
+			print_matchinfo(fieldstruct *field),
+			update_wcsas(wcsstruct *wcs, double angle,
+				double scale),
+			update_wcscc(wcsstruct *wcs, double dx, double dy),
+			update_wcsll(wcsstruct *wcs, double dlng, double dlat),
+			update_wcsss(wcsstruct *wcs, double sangle,
+				double shear);
+
+#ifdef USE_THREADS
+extern void		*pthread_match_field(void *arg),
+			pthread_match_fields(fgroupstruct **fgroups,
+				fieldstruct **reffields, int ngroup);
+#endif // USE_THREADS
+#endif // _MATCH_H_
